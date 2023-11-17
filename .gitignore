@@ -10,3 +10,5 @@
 /Scripts/
 /Lib/
 /.idea/
+# ignoring specific pyenv file
+/pyvenv.cfg
