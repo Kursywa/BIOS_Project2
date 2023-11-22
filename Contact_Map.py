@@ -1,27 +1,41 @@
-import sys
 import Bio.PDB
 import numpy
-from Bio.PDB import MMCIFParser
-from Bio.PDB import PDBList
-from Bio import PDB
+from Bio.PDB import Selection
+import matplotlib.pyplot as plt
 
 
 def main():
-    protein = "2HHB"
-    pdbl = PDBList()  # create pdb list
-    native_pdb = pdbl.retrieve_pdb_file(protein, file_format="pdb")  # download protein from PDB and save it to native_pdb
-    parser = PDB.PDBParser(QUIET=True)  # creating parser
-    structure = parser.get_structure("hemoglobin", native_pdb)  #parsing the protein and saving it to structure variable
-    ca_atoms = []  # initializing array holding all CA atoms
-    # accessing the
-    for model in structure:
-        for chain in model:
-            for residue in chain:
-                for atom in residue:
-                    if 'CA' in atom:
-                        ca_atoms.append(atom['CA'])  # might not remember coordinates, probably better to use dictionary?
-    print(ca_atoms)
+    pdb_file = "2hhb"
+    pdb_filename = pdb_file+".pdb"
+    structure = Bio.PDB.PDBParser().get_structure(pdb_file, pdb_filename)           #wczytanie struktury
+    model = structure[0]
+    residues = structure.get_residues()
+    residues = Selection.unfold_entities(model, 'R')
+    counter=0
+    for r in residues:
+        counter=counter+1
+    contact_matrix = numpy.zeros((counter, counter), dtype = int)         #stworzenie macierzy z samymi zerami
 
 
-if __name__ == "__main__":
+    for row, residue_one in enumerate(residues):                #row to index, a residue_one nazwa residuum
+        for col, residue_two in enumerate(residues):
+            #print(col, row)
+            if col == row or residue_one.id[0].isspace()!=1 or residue_two.id[0].isspace()!=1:
+                continue
+            diff_vector = residue_one["CA"].coord - residue_two["CA"].coord
+            diff_vector = numpy.sqrt(numpy.sum(diff_vector * diff_vector))
+            print (diff_vector, end="")
+            if diff_vector < 8.0:
+                contact_matrix[row][col] = 1
+
+
+    # wykres
+    plt.imshow(contact_matrix, cmap='viridis', interpolation='nearest')
+    plt.show()
+
+
+
+
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
     main()
